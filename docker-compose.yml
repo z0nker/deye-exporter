@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9877:9877"
+    environment:
+      - EXPORTER_PORT=9877
+      - INVERTER_HOST=${INVERTER_HOST:-192.168.100.102}
+      - INVERTER_PORT=${INVERTER_PORT:-8899}
+      - INVERTER_SERIAL=${INVERTER_SERIAL:-2999999999}
+      - EXPORTER_COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-15}
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+    restart: unless-stopped
+    networks:
+      - exporter_net
+
+networks:
+  exporter_net:
+    driver: bridge

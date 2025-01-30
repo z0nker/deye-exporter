@@ -1,0 +1,3 @@
+prometheus_client>=0.17.1
+deye_controller
+pysolarmanv5

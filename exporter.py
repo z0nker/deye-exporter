@@ -11,6 +11,7 @@ from pathlib import Path
 from pysolarmanv5 import PySolarmanV5
 from deye_controller.utils import group_registers, map_response
 from deye_controller.modbus.protocol import HoldingRegisters
+from deye_controller.modbus.register import IntType, FloatType, LongUnsignedType, Register
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

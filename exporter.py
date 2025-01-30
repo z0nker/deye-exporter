@@ -11,7 +11,6 @@ from pathlib import Path
 from pysolarmanv5 import PySolarmanV5
 from deye_controller.utils import group_registers, map_response
 from deye_controller.modbus.protocol import HoldingRegisters
-from deye_controller.modbus.register import IntType, FloatType, LongUnsignedType, Register
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -152,7 +151,7 @@ class DeyeCollector:
         # Initialize connection
         self.inverter = PySolarmanV5(
             address=config['host'],
-            serial=config['serial_number'],  # Changed from serial_number to serial
+            serial=config['serial_number'],
             port=config['port_inverter'],
             mb_slave_id=1,
             verbose=False
@@ -185,8 +184,11 @@ class DeyeCollector:
         if suffix:
             description = f"{description} ({suffix})"
         
-        # Create appropriate metric type
-        if isinstance(register, (IntType, FloatType, LongUnsignedType)):
+        # Check if register has numeric value by checking if it has a 'factor' attribute
+        # Most numeric registers in deye_controller have a factor for scaling
+        is_numeric = hasattr(register, 'factor') or hasattr(register, 'signed')
+        
+        if is_numeric:
             self.metrics[name] = Gauge(
                 f"deye_{name.lower()}", 
                 description

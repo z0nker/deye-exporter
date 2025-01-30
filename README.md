@@ -25,7 +25,7 @@ docker run -d \
   -e INVERTER_HOST=192.168.100.102 \
   -e INVERTER_PORT=8899 \
   -e INVERTER_SERIAL=2999999999 \
-  ghcr.io/z0nker/deye-exporter:latest
+  ghcr.io/z0nker/deye-exporter:main
 ```
 
 Or using Docker Compose:
@@ -84,6 +84,20 @@ python exporter.py
 
 The exporter can be configured using either a configuration file (`config.ini`) or environment variables.
 Environment variables take precedence over the configuration file.
+
+### Available Registers
+
+To see all available registers that can be monitored, use the `--list-registers` command:
+
+```bash
+# With Python
+python exporter.py --list-registers
+
+# With Docker
+docker run --rm ghcr.io/z0nker/deye-exporter:main python exporter.py --list-registers
+```
+
+This will display a list of all available registers with their descriptions and units. You can use these register names in your configuration.
 
 ### Configuration Options
 

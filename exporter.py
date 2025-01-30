@@ -6,6 +6,7 @@ import time
 import logging
 import os
 import configparser
+import argparse
 from pathlib import Path
 from pysolarmanv5 import PySolarmanV5
 from deye_controller.utils import group_registers, map_response
@@ -66,6 +67,25 @@ def load_config():
         config['metrics'] = [m.strip() for m in os.getenv('INVERTER_METRICS').split(',') if m.strip()]
     
     return config
+
+def print_available_registers():
+    """Print all available registers with their descriptions and units"""
+    print("\nAvailable Deye Inverter Registers:")
+    print("-" * 80)
+    print(f"{'Register Name':<40} {'Description':<30} {'Unit':<10}")
+    print("-" * 80)
+    
+    for reg in HoldingRegisters.as_list():
+        name = reg.name
+        description = reg.description.title() if hasattr(reg, 'description') else 'No description'
+        suffix = getattr(reg, 'suffix', '')
+        print(f"{name:<40} {description:<30} {suffix:<10}")
+    
+    print("\nTo use these registers, add them to your config.ini under the [metrics] section:")
+    print("""
+[metrics]
+selection = Register1,Register2,Register3
+    """)
 
 class DeyeCollector:
     def __init__(self, config):
@@ -186,6 +206,17 @@ class DeyeCollector:
             logger.error(f"Error collecting metrics: {e}", exc_info=True)
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Deye Inverter Prometheus Exporter')
+    parser.add_argument('--list-registers', action='store_true',
+                       help='List all available registers and exit')
+    args = parser.parse_args()
+    
+    # If --list-registers is specified, print registers and exit
+    if args.list_registers:
+        print_available_registers()
+        return
+    
     # Load configuration
     config = load_config()
     

@@ -151,7 +151,7 @@ class DeyeCollector:
         # Initialize connection
         self.inverter = PySolarmanV5(
             address=config['host'],
-            serial_number=config['serial_number'],
+            serial=config['serial_number'],  # Changed from serial_number to serial
             port=config['port_inverter'],
             mb_slave_id=1,
             verbose=False

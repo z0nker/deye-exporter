@@ -16,6 +16,64 @@ from deye_controller.modbus.protocol import HoldingRegisters
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Define available registers with their descriptions and units
+AVAILABLE_REGISTERS = [
+    # Battery metrics
+    ("BatteryChargeToday", "Battery Charge Today", "kWh"),
+    ("BatteryDischargeToday", "Battery Discharge Today", "kWh"),
+    ("BatteryChargeTotal", "Battery Charge Total", "kWh"),
+    ("BatteryDischargeTotal", "Battery Discharge Total", "kWh"),
+    ("BatteryTemp", "Battery Temperature", "°C"),
+    ("BatteryVoltage", "Battery Voltage", "V"),
+    ("BatterySOC", "Battery State of Charge", "%"),
+    ("BatteryOutPower", "Battery Output Power", "W"),
+    ("BatteryOutCurrent", "Battery Output Current", "A"),
+    
+    # BMS metrics
+    ("BMSChargedVoltage", "BMS Charged Voltage", "V"),
+    ("BMSDischargedVoltage", "BMS Discharged Voltage", "V"),
+    ("BMSChargingCurrentLimit", "BMS Charging Current Limit", "A"),
+    ("BMSDischargeCurrentLimit", "BMS Discharge Current Limit", "A"),
+    ("BMSBatteryCapacity", "BMS Battery Capacity", "%"),
+    ("BMSBatteryVoltage", "BMS Battery Voltage", "V"),
+    ("BMSBatteryCurrent", "BMS Battery Current", "A"),
+    ("BMSBatteryTemp", "BMS Battery Temperature", "°C"),
+    
+    # Grid metrics
+    ("GRIDPhaseAVolt", "Grid Phase A Voltage", "V"),
+    ("GRIDPhaseBVolt", "Grid Phase B Voltage", "V"),
+    ("GRIDPhaseCVolt", "Grid Phase C Voltage", "V"),
+    ("GRIDPhaseAPowerIn", "Grid Phase A Power In", "W"),
+    ("GRIDPhaseBPowerIn", "Grid Phase B Power In", "W"),
+    ("GRIDPhaseCPowerIn", "Grid Phase C Power In", "W"),
+    ("GRIDActivePowerIn", "Grid Active Power In", "W"),
+    ("GRIDFrequency", "Grid Frequency", "Hz"),
+    
+    # PV metrics
+    ("PV1InPower", "PV1 Input Power", "W"),
+    ("PV2InPower", "PV2 Input Power", "W"),
+    ("PV3InPower", "PV3 Input Power", "W"),
+    ("PV4InPower", "PV4 Input Power", "W"),
+    ("PV1Voltage", "PV1 Voltage", "V"),
+    ("PV1Current", "PV1 Current", "A"),
+    ("PV2Voltage", "PV2 Voltage", "V"),
+    ("PV2Current", "PV2 Current", "A"),
+    ("PV3Voltage", "PV3 Voltage", "V"),
+    ("PV3Current", "PV3 Current", "A"),
+    ("PV4Voltage", "PV4 Voltage", "V"),
+    ("PV4Current", "PV4 Current", "A"),
+    
+    # Daily/Total metrics
+    ("TodayBuyGrid", "Today Bought From Grid", "kWh"),
+    ("TodaySoldGrid", "Today Sold To Grid", "kWh"),
+    ("TotalBuyGrid", "Total Bought From Grid", "kWh"),
+    ("TotalSellGrid", "Total Sold To Grid", "kWh"),
+    ("TodayToLoad", "Today To Load", "kWh"),
+    ("TotalToLoad", "Total To Load", "kWh"),
+    ("TodayFromPV", "Today From PV", "kWh"),
+    ("TotalFromPV", "Total From PV", "kWh"),
+]
+
 def load_config():
     """
     Load configuration from config file and environment variables.
@@ -75,35 +133,17 @@ def print_available_registers():
     print(f"{'Register Name':<40} {'Description':<45} {'Unit':<10}")
     print("-" * 100)
     
-    # Get register groups correctly
-    iterator = HoldingRegisters.as_list()
-    reg_groups = group_registers(iterator)
-    
-    # Track unique register names to avoid duplicates
-    seen_registers = set()
-    
-    for group in reg_groups:
-        for reg in group:
-            # Skip if we've already seen this register
-            if reg.description in seen_registers:
-                continue
-                
-            seen_registers.add(reg.description)
-            
-            name = reg.description.replace(' ', '')  # This will be the name to use in config
-            description = reg.description.title()
-            suffix = getattr(reg, 'suffix', '')
-            
-            print(f"{name:<40} {description:<45} {suffix:<10}")
+    for reg_name, description, unit in AVAILABLE_REGISTERS:
+        print(f"{reg_name:<40} {description:<45} {unit:<10}")
     
     print("\nTo use these registers, add them to your config.ini under the [metrics] section:")
-    print("For example, to monitor battery charge and voltage:")
+    print("For example, to monitor battery and PV metrics:")
     print("""
 [metrics]
-selection = BatteryChargeToday,BatteryDischargeToday,BMSBatteryVoltage
+selection = BatterySOC,BatteryVoltage,BatteryOutPower,PV1InPower,PV2InPower,TodayFromPV
     """)
     print("\nOr use the INVERTER_METRICS environment variable:")
-    print('export INVERTER_METRICS="BatteryChargeToday,BatteryDischargeToday,BMSBatteryVoltage"')
+    print('export INVERTER_METRICS="BatterySOC,BatteryVoltage,BatteryOutPower,PV1InPower,PV2InPower,TodayFromPV"')
 
 class DeyeCollector:
     def __init__(self, config):

@@ -209,53 +209,74 @@ class DeyeCollector:
     
     def _update_metric(self, description: str, value: Union[float, str, int], suffix: str = ''):
         """Update a metric with the given value, automatically choosing the right type"""
-        if self._is_numeric_value(value):
-            # For numeric values, use Gauge
-            if description in self.metrics:
-                try:
-                    self.metrics[description].set(float(value))
-                    logger.debug(f"Updated numeric metric {description}: {value}")
-                except (ValueError, TypeError) as e:
-                    logger.error(f"Error converting value for metric {description}: {e}")
-        else:
-            # For string values, use Info
-            if description in self.info_metrics:
-                value_str = str(value)
-                if suffix:
-                    value_str = f"{value_str} {suffix}"
-                self.info_metrics[description].info({'value': value_str})
-                logger.debug(f"Updated string metric {description}: {value_str}")
+        try:
+            if self._is_numeric_value(value):
+                # For numeric values, use Gauge
+                if description in self.metrics:
+                    try:
+                        self.metrics[description].set(float(value))
+                        logger.debug(f"Updated numeric metric {description}: {value}")
+                    except (ValueError, TypeError) as e:
+                        logger.error(f"Error converting value for metric {description}: {e}")
+            else:
+                # For string values, use Info
+                if description in self.info_metrics:
+                    value_str = str(value)
+                    if suffix:
+                        value_str = f"{value_str} {suffix}"
+                    self.info_metrics[description].info({'value': value_str})
+                    logger.debug(f"Updated string metric {description}: {value_str}")
+        except Exception as e:
+            logger.error(f"Error updating metric {description}: {e}", exc_info=True)
 
     def collect_metrics(self):
         """Collect metrics from the inverter"""
         try:
-            # Get register objects for configured metrics
-            regs = [getattr(HoldingRegisters, attr) for attr in self.config['metrics'] if hasattr(HoldingRegisters, attr)]
-            
-            # Group registers for efficient reading
-            groups = group_registers(regs)
-            
-            # Read each group of registers
-            for group in groups:
-                try:
-                    res = self.inverter.read_holding_registers(group.start_address, group.len)
-                    mapped_registers = map_response(res, group)
-                    
-                    # Update Prometheus metrics for each register in the group
-                    for reg in group:  # RegistersGroup is directly iterable
-                        if hasattr(reg, 'description'):
-                            description = reg.description.title()
-                            suffix = getattr(reg, 'suffix', '')
-                            value = reg.value if hasattr(reg, 'value') else None
-                            
-                            if value is not None:
-                                self._update_metric(description, value, suffix)
-                        else:
-                            logger.warning(f"Register without description: {reg}")
+            # If no metrics configured, get all available registers
+            if not self.config['metrics']:
+                iterator = HoldingRegisters.as_list()
+                reg_groups = group_registers(iterator)
                 
-                except Exception as e:
-                    logger.error(f"Error reading register group: {e}", exc_info=True)
-                    
+                for group in reg_groups:
+                    try:
+                        res = self.inverter.read_holding_registers(group.start_address, group.len)
+                        mapped_registers = map_response(res, group)
+                        
+                        for reg in group:
+                            if hasattr(reg, 'description'):
+                                name = reg.description.replace(' ', '')
+                                value = mapped_registers.get(reg)
+                                if value is not None:
+                                    self._update_metric(name, value, getattr(reg, 'suffix', ''))
+                    except Exception as e:
+                        logger.error(f"Error reading register group: {e}", exc_info=True)
+            else:
+                # Get configured registers
+                regs = [getattr(HoldingRegisters, attr) for attr in self.config['metrics'] if hasattr(HoldingRegisters, attr)]
+                
+                if not regs:
+                    logger.warning("No valid registers found in configuration")
+                    return
+                
+                # Group registers for efficient reading
+                groups = group_registers(regs)
+                
+                # Read each group of registers
+                for group in groups:
+                    try:
+                        res = self.inverter.read_holding_registers(group.start_address, group.len)
+                        mapped_registers = map_response(res, group)
+                        
+                        # Update Prometheus metrics for each register in the group
+                        for reg in group:
+                            if hasattr(reg, 'description'):
+                                name = reg.description.replace(' ', '')
+                                value = mapped_registers.get(reg)
+                                if value is not None:
+                                    self._update_metric(name, value, getattr(reg, 'suffix', ''))
+                    except Exception as e:
+                        logger.error(f"Error reading register group: {e}", exc_info=True)
+                        
         except Exception as e:
             logger.error(f"Error collecting metrics: {e}", exc_info=True)
 

@@ -1,6 +1,6 @@
 # Deye Inverter Prometheus Exporter
 
-[![Docker Build](https://github.com/USER_NAME/REPO_NAME/actions/workflows/docker-build.yml/badge.svg)](https://github.com/USER_NAME/REPO_NAME/actions/workflows/docker-build.yml)
+[![Docker Build](https://github.com/z0nker/deye-exporter/actions/workflows/docker-build.yml/badge.svg)](https://github.com/z0nker/deye-exporter/actions/workflows/docker-build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Prometheus exporter for Deye solar inverter metrics. This exporter collects various metrics from Deye inverters using the Modbus protocol and exposes them in Prometheus format.
@@ -25,7 +25,7 @@ docker run -d \
   -e INVERTER_HOST=192.168.100.102 \
   -e INVERTER_PORT=8899 \
   -e INVERTER_SERIAL=2999999999 \
-  ghcr.io/USER_NAME/REPO_NAME:latest
+  ghcr.io/z0nker/deye-exporter:latest
 ```
 
 Or using Docker Compose:
@@ -60,8 +60,8 @@ docker compose up -d
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/USER_NAME/REPO_NAME.git
-cd REPO_NAME
+git clone https://github.com/z0nker/deye-exporter.git
+cd deye-exporter
 ```
 
 2. Create virtual environment:

@@ -71,21 +71,46 @@ def load_config():
 def print_available_registers():
     """Print all available registers with their descriptions and units"""
     print("\nAvailable Deye Inverter Registers:")
-    print("-" * 80)
-    print(f"{'Register Name':<40} {'Description':<30} {'Unit':<10}")
-    print("-" * 80)
+    print("-" * 100)
+    print(f"{'Register Name':<40} {'Description':<45} {'Unit':<10}")
+    print("-" * 100)
     
-    for reg in HoldingRegisters.as_list():
-        name = reg.name
-        description = reg.description.title() if hasattr(reg, 'description') else 'No description'
-        suffix = getattr(reg, 'suffix', '')
-        print(f"{name:<40} {description:<30} {suffix:<10}")
+    for item in HoldingRegisters.as_list():
+        # Skip items that don't have the required attributes
+        if not hasattr(item, '__dict__'):
+            continue
+            
+        # Get the register name
+        name = None
+        for attr_name in ['name', '__name__']:
+            if hasattr(item, attr_name):
+                name = getattr(item, attr_name)
+                break
+        
+        if name is None:
+            continue
+            
+        # Skip internal/private attributes
+        if name.startswith('_'):
+            continue
+            
+        # Get description and suffix
+        description = item.description.title() if hasattr(item, 'description') else 'No description'
+        suffix = getattr(item, 'suffix', '')
+        
+        # Skip if it's not actually a register (e.g., if it's a method or property)
+        if callable(item) or isinstance(item, property):
+            continue
+            
+        print(f"{name:<40} {description:<45} {suffix:<10}")
     
     print("\nTo use these registers, add them to your config.ini under the [metrics] section:")
     print("""
 [metrics]
 selection = Register1,Register2,Register3
     """)
+    print("\nOr use the INVERTER_METRICS environment variable:")
+    print('export INVERTER_METRICS="Register1,Register2,Register3"')
 
 class DeyeCollector:
     def __init__(self, config):

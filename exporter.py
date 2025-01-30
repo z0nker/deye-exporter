@@ -75,42 +75,35 @@ def print_available_registers():
     print(f"{'Register Name':<40} {'Description':<45} {'Unit':<10}")
     print("-" * 100)
     
-    for item in HoldingRegisters.as_list():
-        # Skip items that don't have the required attributes
-        if not hasattr(item, '__dict__'):
-            continue
+    # Get register groups correctly
+    iterator = HoldingRegisters.as_list()
+    reg_groups = group_registers(iterator)
+    
+    # Track unique register names to avoid duplicates
+    seen_registers = set()
+    
+    for group in reg_groups:
+        for reg in group:
+            # Skip if we've already seen this register
+            if reg.description in seen_registers:
+                continue
+                
+            seen_registers.add(reg.description)
             
-        # Get the register name
-        name = None
-        for attr_name in ['name', '__name__']:
-            if hasattr(item, attr_name):
-                name = getattr(item, attr_name)
-                break
-        
-        if name is None:
-            continue
+            name = reg.description.replace(' ', '')  # This will be the name to use in config
+            description = reg.description.title()
+            suffix = getattr(reg, 'suffix', '')
             
-        # Skip internal/private attributes
-        if name.startswith('_'):
-            continue
-            
-        # Get description and suffix
-        description = item.description.title() if hasattr(item, 'description') else 'No description'
-        suffix = getattr(item, 'suffix', '')
-        
-        # Skip if it's not actually a register (e.g., if it's a method or property)
-        if callable(item) or isinstance(item, property):
-            continue
-            
-        print(f"{name:<40} {description:<45} {suffix:<10}")
+            print(f"{name:<40} {description:<45} {suffix:<10}")
     
     print("\nTo use these registers, add them to your config.ini under the [metrics] section:")
+    print("For example, to monitor battery charge and voltage:")
     print("""
 [metrics]
-selection = Register1,Register2,Register3
+selection = BatteryChargeToday,BatteryDischargeToday,BMSBatteryVoltage
     """)
     print("\nOr use the INVERTER_METRICS environment variable:")
-    print('export INVERTER_METRICS="Register1,Register2,Register3"')
+    print('export INVERTER_METRICS="BatteryChargeToday,BatteryDischargeToday,BMSBatteryVoltage"')
 
 class DeyeCollector:
     def __init__(self, config):

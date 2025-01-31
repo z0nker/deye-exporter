@@ -10,7 +10,7 @@ import argparse
 from pathlib import Path
 from pysolarmanv5 import PySolarmanV5
 from deye_controller.utils import group_registers, map_response
-from deye_controller.modbus.protocol import HoldingRegisters
+from deye_controller import HoldingRegisters
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -164,7 +164,7 @@ class DeyeCollector:
             for group in reg_groups:
                 for reg in group:
                     if hasattr(reg, 'description'):
-                        metric_name = reg.description.replace(' ', '')
+                        metric_name = reg.description.title()
                         self.create_metric(metric_name, reg)
         else:
             # Create metrics based on configuration
@@ -244,8 +244,8 @@ class DeyeCollector:
                         
                         for reg in group:
                             if hasattr(reg, 'description'):
-                                name = reg.description.replace(' ', '')
-                                value = mapped_registers.get(reg)
+                                name = reg.description.title()
+                                value = reg.format()
                                 if value is not None:
                                     self._update_metric(name, value, getattr(reg, 'suffix', ''))
                     except Exception as e:

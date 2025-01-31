@@ -250,6 +250,7 @@ class DeyeCollector:
                                     self._update_metric(name, value, getattr(reg, 'suffix', ''))
                     except Exception as e:
                         logger.error(f"Error reading register group: {e}", exc_info=True)
+                self.inverter.disconnect()
             else:
                 # Get configured registers
                 regs = [getattr(HoldingRegisters, attr) for attr in self.config['metrics'] if hasattr(HoldingRegisters, attr)]
@@ -276,6 +277,7 @@ class DeyeCollector:
                                     self._update_metric(name, value, getattr(reg, 'suffix', ''))
                     except Exception as e:
                         logger.error(f"Error reading register group: {e}", exc_info=True)
+                self.inverter.disconnect()
                         
         except Exception as e:
             logger.error(f"Error collecting metrics: {e}", exc_info=True)
